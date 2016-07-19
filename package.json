@@ -1,0 +1,23 @@
+{
+  "name": "angular2-tables-testdata-provider",
+  "version": "1.0.0",
+  "description": "Generator for test data for the angular2-tables evaluation app",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf lib",
+    "build": "npm run clean && babel src -d lib",
+    "build-dev": "npm run clean && babel src -d lib --source-maps \"both\"",
+    "prepublish": "npm run build"
+  },
+  "keywords": [
+    "DB",
+    "data"
+  ],
+  "author": "DevWurm",
+  "devDependencies": {
+    "babel-cli": "6.10.1",
+    "babel-preset-es2015": "6.9.0"
+  },
+  "license": "MIT"
+}

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 DevWurm
+ * Licensed under MIT (https://github.com/DevWurm/angular2-tables-testdata-provider/blob/master/LICENSE)
+ */
+
 import * as path from "path";
 import {createWriteStream} from "fs";
 import {request as httpRequest} from "http";

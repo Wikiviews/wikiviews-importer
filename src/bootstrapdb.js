@@ -13,7 +13,7 @@ const defaultArgs = {
     noDB: undefined,
     destDir: "./data",
     dbPort: 27017,
-    dbAddr: "127.0.0.1"
+    dbAddr: "127.0.0.1",
     dbDB: "wikipedia",
     dbCollection: "pagecounts",
     years: "b:2016-2016",
@@ -94,7 +94,7 @@ if (!noDownload) {
             if (!args.noDB) {
                 // add data to database if connection is set up (resolved -> then); ingore failure, because it was logged once after setup (rejected -> catch)
                 return dbConnection.then(db => dbadd(path, db)).catch(reason => null);
-               )} else {
+            } else {
                 return null;
             }
         }).then(objectId => {
@@ -111,7 +111,7 @@ if (!noDownload) {
             if (err) return reject(err);
 
             resolve(files.map(file => path.resolve(args.destDir, file)));
-        }
+        });
     }).then(files => {
         return files.map(file => {
             // add data to database if connection is set up (resolved -> then); ingore failure, because it was logged once after setup (rejected -> catch)

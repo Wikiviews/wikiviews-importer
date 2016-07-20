@@ -27,7 +27,9 @@ export default function download(sourcePattern, rules, destPattern) {
     const sources = applyPattern(sourcePattern, rules);
     if (destPattern) {
         const dests = applyPattern(destPattern, rules);
-        paths = sources.map((src, key) => {source: src, dest: dests[key]};);
+        paths = sources.map((src, key) => {
+            return {source: src, dest: dests[key]};
+        });
     } else {
         paths = sources.map(src => {source: src});
     }

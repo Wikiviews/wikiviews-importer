@@ -11,7 +11,7 @@ export default function applyPattern(pattern, [rule, ...rules]) {
 
     if (!rule) return patterns;
 
-    return applyPattern(patterns.map(pattern => applyRule(pattern, rule)), rules);
+    return applyPattern([].concat.apply([], patterns.map(pattern => applyRule(pattern, rule))), rules); // [].concat.apply([9, arr) flattens arr
 }
 
 /**
@@ -25,19 +25,20 @@ export default function applyPattern(pattern, [rule, ...rules]) {
 export function applyRule(pattern, {variable, from, to, values, padChar}) {
    const regExp = new RegExp(`(${variable}+)`, 'g');
 
-   const vals = (!values) ? new Array(Number(to) - Number(from)).map((val, key) => Number(from) + key) : values;
+   const vals = (!values) ? Array.apply(null, {length: Number(to) - Number(from) + 1}).map((val, key) => Number(from) + key) : values;
 
    return vals.map(val => {
         let result = ""
         
+        let match;
         let chunk = pattern;
-        while (const match = regExp.exec(chunk)) {
-            result += chunk.substr(0, match.index) + pad(val, match[1].length) + chunk.substr(match.index + match[1].length, (match.lastIndex) ? match.lastIndex : undefined);
+        while (match = regExp.exec(chunk)) {
+            result += chunk.substr(0, match.index) + pad(val, match[1].length, padChar) + chunk.substr(match.index + match[1].length, (match.lastIndex) ? match.lastIndex : undefined);
             chunk = (match.lastIndex) ? chunk.substr(match.lastIndex) : "";
         }
         
         return result;
-   }
+   });
 }
 
 /**
@@ -50,5 +51,5 @@ export function applyRule(pattern, {variable, from, to, values, padChar}) {
  * @return {String} padded value
  */
 function pad(value, length, padChar='0') {
-        return (value.toString().length < length) ? pad(padChar + value, length):value;
+        return (value.toString().length < length) ? pad(padChar + value, length, padChar):value;
 }

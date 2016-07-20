@@ -6,7 +6,7 @@ const assert = chai.assert;
 suite("applyPattern", function() {
     suite("applyPattern", function() {
         test("apply pattern without variable", function() {
-            assert.equal(applyPattern("test", []), ["test"]);
+            assert.deepEqual(applyPattern("test", []), ["test"]);
         })
 
         test("apply pattern with one variable", function() {
@@ -15,7 +15,7 @@ suite("applyPattern", function() {
                 values: [1,2]
             }];
 
-            assert.equal(applyPattern("testx", rules), ["test1", "test2"]);
+            assert.deepEqual(applyPattern("testx", rules), ["test1", "test2"]);
         })
 
         test("apply pattern with multiple variables", function() {
@@ -27,9 +27,9 @@ suite("applyPattern", function() {
                 values: [1,2]
             }];
 
-            assert.equal(applyPattern("xtesty", rules), ["1test1", "1test2", "2test1", "2test2"]);
-            assert.equal(applyPattern("tesxty", rules), ["tes1t1", "tes1t2", "tes2t1", "tes2t2"]);
-            assert.equal(applyPattern("tesxyt", rules), ["tes11t", "tes12t", "tes21t", "tes22t"]);
+            assert.deepEqual(applyPattern("xtesty", rules), ["1test1", "1test2", "2test1", "2test2"]);
+            assert.deepEqual(applyPattern("tesxty", rules), ["tes1t1", "tes1t2", "tes2t1", "tes2t2"]);
+            assert.deepEqual(applyPattern("tesxyt", rules), ["tes11t", "tes12t", "tes21t", "tes22t"]);
         })
 
         test("apply pattern with range option", function() {
@@ -39,7 +39,7 @@ suite("applyPattern", function() {
                 to: 3
             }];
 
-            assert.equal(applyPattern("testx", rules), ["test1", "test2", "test3"]);
+            assert.deepEqual(applyPattern("testx", rules), ["test1", "test2", "test3"]);
         })
 
         test("apply pattern which requires padding", function() {
@@ -55,8 +55,8 @@ suite("applyPattern", function() {
             }];
  
 
-            assert.equal(applyPattern("testxxx", rules), ["test001"]);
-            assert.equal(applyPattern("testxxx", rules2), ["test..1"]);
+            assert.deepEqual(applyPattern("testxxx", rules), ["test001"]);
+            assert.deepEqual(applyPattern("testxxx", rules2), ["test..1"]);
         })
 
         test("apply pattern with non-numerical values", function() {
@@ -65,7 +65,7 @@ suite("applyPattern", function() {
                 values: ["test"]
             }];
 
-            assert.equal(applyPattern("testx", rules), ["testtest"]);
+            assert.deepEqual(applyPattern("testx", rules), ["testtest"]);
         })
     })
 })

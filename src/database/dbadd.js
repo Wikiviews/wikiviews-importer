@@ -1,7 +1,7 @@
 import {createInterface} from "readline";
 import {createReadStream} from "fs";
-import {parseFileName} from "../parsing/parseFileName";
-import {parseLine} from "../parsing/parseLine";
+import parseFileName from "./parsing/parseFileName";
+import parseLine from "./parsing/parseLine";
 
 /**
  * adds the wikipedia pageview data in the specified file into the passed db connection
@@ -34,6 +34,6 @@ export default function dbadd(file, db) {
 
         fileReader.on("close", () =>{
             resolve(true);
-        }
+        })
     })
 }

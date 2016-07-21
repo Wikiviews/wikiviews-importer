@@ -10,8 +10,18 @@
 export default function parseLine(line, date) {
     const fields = line.split(/\s/);
 
-    const result = {};
-    result[fields[0]][fields[1]][date.year][date.month][date.day][date.hour] = fields[2];
+    const result = {
+        project: fields[0],
+        pages: [
+            {
+                name: fields[1],
+                counts: [{
+                    date: date,
+                    count: fields[2]
+                }]
+            }
+        ]
+    };
 
     return Promise.resolve(result);
 }

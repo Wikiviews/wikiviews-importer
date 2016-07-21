@@ -10,9 +10,9 @@ suite("parseLine", function() {
 
         parseLine(line, date).then(result => {
             assert.equal(result.project, "en");
-            assert.equal(result.pages[0].name, "Main_Page");
-            assert.deepEqual(result.pages[0].counts[0].date, date);
-            assert.equal(result.pages[0].counts[0].count, 242332);
+            assert.equal(result.page, "Main_Page");
+            assert.deepEqual(result.date, date);
+            assert.equal(result.count, 242332);
             done()
         }).catch(reason => {
             assert.fail(reason);

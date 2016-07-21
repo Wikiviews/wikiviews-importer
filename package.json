@@ -23,5 +23,9 @@
     "mocha": "2.5.3",
     "mongodb": "^2.2.4"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "mongodb": "^2.2.4"
+  }
 }

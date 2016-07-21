@@ -38,7 +38,10 @@ const args = Object.assign(defaultArgs, cliArgs);
 // setup db connection
 let dbCollection;
 if (!args.noDB) {
-    dbCollection = MongoClient.connect(`mongodb://${args.dbAddr}:${args.dbPort}/${args.dbDB}`).then(db => db.collection(args.dbCollection));
+    dbCollection = MongoClient.connect(`mongodb://${args.dbAddr}:${args.dbPort}/${args.dbDB}`).then(db => db.collection(args.dbCollection)).then(col => {
+        console.log(`Connected to mongodb at ${args.dbAddr}:${args.dbPort} with db ${args.dbDB} at collection ${args.dbCollection}`);
+        return col;
+    });
 
     dbCollection.catch(reason => {
         console.error(reason);
@@ -115,7 +118,7 @@ if (!args.noDownload) {
         }).then(path => {
             // add each downloaded file to the database (if not disabled)
             if (!args.noDB) {
-                return dbCollection.then(col => dbadd(path, col)).catch(reason => console.error(reason));
+                return dbCollection.then(col => dbadd(path, col, console.log)).catch(reason => console.error(reason));
             } else {
                 return null;
             }
@@ -137,7 +140,7 @@ if (!args.noDownload) {
     }).then(files => {
         return files.map(file => {
             // add data to database if connection is set up (resolved -> then); ingore failure, because it was logged once after setup (rejected -> catch)
-            return dbCollection.then(col => dbadd(path, col)).then(dbAction => {
+            return dbCollection.then(col => dbadd(file, col, console.log)).then(dbAction => {
                 // pass through dbAction status and current file
                 return {dbAction: dbAction, file: file};
             }).catch(reason => console.error(reason));

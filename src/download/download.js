@@ -5,8 +5,8 @@
 
 import * as path from "path";
 import {createWriteStream} from "fs";
-import {request as httpRequest} from "http";
-import {request as httpsRequest} from "https";
+import {get as httpRequest} from "http";
+import {get as httpsRequest} from "https";
 import {parse as parseUrl} from "url";
 import {Transform, Writable} from "stream";
 import applyPattern from "../patterns/applyPattern";
@@ -17,24 +17,24 @@ import applyPattern from "../patterns/applyPattern";
  *
  * @param sourcePattern {String} url pattern, which contains variables which will be substituded by the rules specified in the rules parameter
  * @param rules {[Object]} array of rule objects. Each rule object needs a variable field and either a from and to property or a values array
- * @param destPattern {String} [Optional] destination file pattern, which is applied like the sourcePattern. If not provided the file contents are provided via the return value
- * @param decompressor {Stream} [Optional] If specified the data will be decompressed using the specified decompressor stream
+ * @param dest {Object} [Optional] iObject containing of a string with the destination file pattern, which is applied like the sourcePattern, as well as a directory, in which the detination file will be written. If not provided the file contents are provided via the return value
+ * @param decompressor {Function} [Optional] Constructor function, for a decompressor stream. If specified the data will be decompressed using the specified decompressor stream
  *
  * @return {[Promise]} Array of promises of which each either contains the filepath of the result path or the resulting data
  */
-export default function download(sourcePattern, rules, destPattern) {
+export default function download(sourcePattern, rules, {destPattern, dir}, decompressor) {
     let paths = [];
     const sources = applyPattern(sourcePattern, rules);
     if (destPattern) {
         const dests = applyPattern(destPattern, rules);
         paths = sources.map((src, key) => {
-            return {source: src, dest: dests[key]};
+            return {source: src, dest: path.resolve(dir,dests[key])};
         });
     } else {
         paths = sources.map(src => {source: src});
     }
 
-    return paths.map(identifier => downloadFile(identifier.source, identifier.dest, decompressor));
+    return paths.map(identifier => downloadFile(identifier.source, identifier.dest, decompressor()));
 }
 
 
@@ -52,23 +52,27 @@ export function downloadFile(url, target, decompressor) {
     return new Promise((resolve, reject) => {
         if (!url) return reject(new Error('Nor target Url specified'));
         
-        const request = parseUrl(url).protocol == 'https:' ? httpsRequest : httpRequest;
+        const urlData = parseUrl(url);
+
+        const request = urlData.protocol == 'https:' ? httpsRequest : httpRequest;
+
+        const requestOptions = {
+            host: urlData.host,
+            path: urlData.path
+        }
 
         // create and send get request to url
-        const req = request(url, res => {
+        const req = request(requestOptions, res => {
             const out = target ? createWriteStream(target) : new StringWriter();
             const dec = decompressor ? decompressor : new PassiveStream();
 
             res.on('error', reject);
-            dec.on('error', reject);
             out.on('error', reject);
             
             res.pipe(dec).pipe(out);
 
-            out.on('finish', () => resolve(target ? target : out.result));
+            out.on('finish', () => out.close(() => resolve(target ? target : out.result)));
         });
-
-        req.end()
 
         req.on('error', reject);
     });

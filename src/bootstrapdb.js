@@ -1,14 +1,24 @@
-import * as minimist from "minimist";
+import getArguments from "minimist";
 import download from "./download/download";
+import dbadd from "./database/dbadd";
 import * as zlib from "zlib";
 import {MongoClient} from "mongodb";
 import {readdir} from "fs";
+import * as path from "path";
+
+class PatternRange {
+    constructor(variable, start, end) {
+        this.variable = variable;
+        this.start = start;
+        this.end = end;
+    }
+}
 
 // setup arguments
-const cliArgs = minimist(process.argv);
+const cliArgs = getArguments(process.argv);
 const defaultArgs = {
-    sourcePattern: "https://dumps.wikimedia.org/other/pagecounts-raw/2016/2016-07/pagecounts-bbbbmmdd-hh0000.gz",
-    destFilePattern: "pagecounts-bbbbmmdd-hh.csv",
+    sourcePattern: "https://dumps.wikimedia.org/other/pagecounts-raw/2016/2016-07/pagecounts-bbbbffjj-ll0000.gz",
+    destFilePattern: "bbbb-ff-jj-ll.csv",
     noDownload: undefined,
     noDB: undefined,
     destDir: "./data",
@@ -22,31 +32,43 @@ const defaultArgs = {
     hours: "l:0-23",
     decompress: undefined
 }
-const args = Object.assign(defaultArgs, cmdArgs);
+const args = Object.assign(defaultArgs, cliArgs);
 
 // setup db connection
-let dbConnection;
+let dbCollection;
 if (!args.noDB) {
-    dbConnection = MongoClient.connect(`mongodb://${args.dbAddr}:${args.dbPort}/${args.dbDB}`).then(db => db.collection(args.dbCollection));
+    dbCollection = MongoClient.connect(`mongodb://${args.dbAddr}:${args.dbPort}/${args.dbDB}`).then(db => db.collection(args.dbCollection));
 
-    dbConnection.catch(reason => {
+    dbCollection.catch(reason => {
         console.error(reason);
     });
 }
 
-if (!noDownload) {
+if (!args.noDownload) {
     // parse ranges
     const years = parsePatternRange(args.years);
-    if (!years) console.error(new Error("Wrong year range specified")); process.exit(1);
+    if (!years) {
+        console.error(new Error("Wrong year range specified")); 
+        process.exit(1);
+    }
 
     const months = parsePatternRange(args.months);
-    if (!months) console.error(new Error("Wrong month range specified")); process.exit(1);
+    if (!months) {
+        console.error(new Error("Wrong month range specified"))
+        process.exit(1);
+    }
 
     const days = parsePatternRange(args.days);
-    if (!days) console.error(new Error("Wrong day range specified")); process.exit(1);
-
+    if (!days) {
+        console.error(new Error("Wrong day range specified"))
+        process.exit(1);
+    }
+    
     const hours = parsePatternRange(args.hours);
-    if (!hours) console.error(new Error("Wrong hour range specified")); process.exit(1);
+    if (!hours) {
+        console.error(new Error("Wrong hour range specified"))
+        process.exit(1);
+    }
 
     // setup pattern rules
     const rules = [{
@@ -77,12 +99,12 @@ if (!noDownload) {
             decompressor = zlib.Unzip;
             break;
         default:
-            decompressor = undefined;
+            decompressor = () => undefined;
             break;
     }
 
     // start downloads
-    download(args.sourcePattern, rules, path.resolve(args.destDir, args.destFilePattern)).map(prms => {
+    download(args.sourcePattern, rules, {destPattern: args.destFilePattern, dir: args.destDir}, decompressor).map(prms => {
         let currentPath;
         return prms.then(path => {
             // log each download
@@ -92,18 +114,17 @@ if (!noDownload) {
         }).then(path => {
             // add each downloaded file to the database (if not disabled)
             if (!args.noDB) {
-                // add data to database if connection is set up (resolved -> then); ingore failure, because it was logged once after setup (rejected -> catch)
-                return dbConnection.then(db => dbadd(path, db)).catch(reason => null);
+                return dbCollection.then(col => dbadd(path, col)).catch(reason => console.error(reason));
             } else {
                 return null;
             }
-        }).then(objectId => {
+        }).then(dbAction => {
             // log database action
-            if (objectId) console.log(`File ${currentPath} added to database with id ${objectId.toHexString}`);
-            return objectId;
+            if (dbAction) console.log(`File ${currentPath} added to database`); 
+            return dbAction;
         }).catch(reason => console.error(reason));
     });
-} else if (!noDB) {
+} else if (!args.noDB) {
     // add files from data directory to database
     new Promise((resolve, reject) => {
         // get all filenames from data directory and generate filepaths
@@ -115,29 +136,26 @@ if (!noDownload) {
     }).then(files => {
         return files.map(file => {
             // add data to database if connection is set up (resolved -> then); ingore failure, because it was logged once after setup (rejected -> catch)
-            return dbConnection.then(db => dbadd(path, db)).catch(reason => Promise.resolve(null));
+            return dbCollection.then(col => dbadd(path, col)).then(dbAction => {
+                // pass through dbAction status and current file
+                return {dbAction: dbAction, file: file};
+            }).catch(reason => console.error(reason));
         })
-    }).then(objectIds => {
-       return objectIds.map(objectIdPrms => {
-           objectIdPrms.then(objectId => {
+    }).then(dbActions => {
+       return objectIds.map(dbActionPrms => {
+           dbActionPrms.then(dbAction => {
                 // log all database actions
-                if (objectId) console.log(`File ${currentPath} added to database with id ${objectId.toHexString}`);
-                return objectId;
+                if (dbAction.dbAction) console.log(`File ${dbAction.file} added to database`);
+                return dbAction;
            }).catch(reason => console.error(reason));
        });
      });
 }
 
+
 function parsePatternRange(rangeString) {
-    const match = /(\w):(\d)+-(\d)+/g.match(rangeString);
+    const match = /(\w):(\d+)-(\d+)/g.exec(rangeString);
 
     return (match) ? new PatternRange(match[1], match[2], match[3]) : null;
 }
 
-class PatternRange {
-    constructor(variable, start, end) {
-        this.variable = variable;
-        this.start = start;
-        this.end = end;
-    }
-}

@@ -5,6 +5,7 @@ import * as zlib from "zlib";
 import {MongoClient} from "mongodb";
 import {readdir} from "fs";
 import * as path from "path";
+import gunzipMulti from "gunzip-multi";
 
 class PatternRange {
     constructor(variable, start, end) {
@@ -93,7 +94,7 @@ if (!args.noDownload) {
     let decompressor;
     switch(args.decompress) {
         case 'gz':
-            decompressor = zlib.Gunzip;
+            decompressor = gunzipMulti;
             break;
         case 'zip':
             decompressor = zlib.Unzip;

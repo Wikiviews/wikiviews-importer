@@ -25,10 +25,8 @@ export default function dbadd(file, db) {
         });
 
         fileReader.on("line", line => {
-            parseLine(line, date).then(data => {
-                // insert data only if filter lets them throughfilter lets them through
-                if (data) return add(data);
-                return false;
+            parseLine(line, date).then(data => col.insertOne(data)).then(insertResult => {
+              if (!insertResult.insertedCount) throw new Error("Data wasn't inserted"); 
             }).catch(reason => reject(reason));
         });
 
@@ -37,3 +35,4 @@ export default function dbadd(file, db) {
         })
     })
 }
+

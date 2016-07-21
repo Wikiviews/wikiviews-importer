@@ -12,15 +12,9 @@ export default function parseLine(line, date) {
 
     const result = {
         project: fields[0],
-        pages: [
-            {
-                name: fields[1],
-                counts: [{
-                    date: date,
-                    count: fields[2]
-                }]
-            }
-        ]
+        page: fields[1],
+        date: date,
+        count: fields[2]
     };
 
     return Promise.resolve(result);

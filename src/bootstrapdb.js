@@ -28,9 +28,10 @@ const defaultArgs = {
     dbDB: "wikipedia",
     dbCollection: "pagecounts",
     years: "b:2016-2016",
-    months: "f:1-12",
+    months: "f:7-7",
     days: "j:1-31",
     hours: "l:0-23",
+    flowControll: undefined,
     decompress: undefined
 }
 const args = Object.assign(defaultArgs, cliArgs);
@@ -100,7 +101,7 @@ if (!args.noDownload) {
             decompressor = gunzipMulti;
             break;
         case 'zip':
-            decompressor = zlib.Unzip;
+            decompressor = zlib.createUnzip;
             break;
         default:
             decompressor = () => undefined;
@@ -108,7 +109,7 @@ if (!args.noDownload) {
     }
 
     // start downloads
-    download(args.sourcePattern, rules, {destPattern: args.destFilePattern, dir: args.destDir}, decompressor).map(prms => {
+    download(args.sourcePattern, rules, {destPattern: args.destFilePattern, dir: args.destDir}, decompressor, args.flowControll).map(prms => {
         let currentPath;
         return prms.then(path => {
             // log each download

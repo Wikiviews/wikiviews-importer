@@ -26,10 +26,31 @@ export default function dbadd(file, col, logger) {
         });
 
         fileReader.on("line", line => {
-            parseLine(line, date).then(data => col.insertOne(data)).then(insertResult => {
-              if (!insertResult.insertedCount) throw new Error("Data wasn't inserted"); 
-              if (logger) logger(`Added ${insertResult.insertedCount} datarow with the id ${insertResult.insertedId}`);
-              return insertResult;
+            parseLine(line, date).then(data => {
+
+                // get date key from parsed data
+                let dateKey;
+                for (const key of Object.keys(data)) {
+                    if (key != "article") dateKey = key;
+                }
+
+                // add data to database (add article if it not exists)
+                return col.updateOne(
+                    {article: (data.article)},
+                    {
+                        $set: {[dateKey]: (data[dateKey])},
+                        $setOnInsert: {article: (data.article)}
+                    },
+                    {upsert: true}
+                )
+            }).then(writeResult => {
+              if (!writeResult) throw new Error("Data wasn't inserted"); 
+              if (writeResult.upsertedId && logger) {
+                logger(`Upserted datarow with id ${writeResult.upsertedId}`);
+              } else if (logger) {
+                logger("Modified datarow");
+              }
+              return writeResult;
             }).catch(reason => reject(reason));
         });
 

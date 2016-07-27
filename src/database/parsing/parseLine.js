@@ -1,3 +1,5 @@
+import dateformat from "dateformat";
+
 /**
  * parses a wikipedia pagecount line into an object
  * @access public
@@ -9,12 +11,11 @@
  */
 export default function parseLine(line, date) {
     const fields = line.split(/\s/);
+    const dateString = dateformat(date, "yyyy-mm-d-HH");
 
     const result = {
-        project: fields[0],
-        page: fields[1],
-        date: date,
-        count: fields[2]
+        article: `${fields[0]}:${fields[1]}`,
+        [dateString]: fields[2]
     };
 
     return Promise.resolve(result);

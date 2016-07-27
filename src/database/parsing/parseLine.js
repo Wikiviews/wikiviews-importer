@@ -11,7 +11,7 @@ import dateformat from "dateformat";
  */
 export default function parseLine(line, date) {
     const fields = line.split(/\s/);
-    const dateString = dateformat(date, "yyyy-mm-d-HH");
+    const dateString = dateformat(date, "yyyy-mm-dd-HH");
 
     const result = {
         article: `${fields[0]}:${fields[1]}`,

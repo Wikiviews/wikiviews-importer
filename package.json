@@ -25,7 +25,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "gunzip-multi": "^1.0.0",
     "minimist": "^1.2.0",
     "mongodb": "^2.2.4"
   }

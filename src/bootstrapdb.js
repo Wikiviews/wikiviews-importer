@@ -98,7 +98,7 @@ if (!args.noDownload) {
     let decompressor;
     switch(args.decompress) {
         case 'gz':
-            decompressor = gunzipMulti;
+            decompressor = zlib.createGunzip;
             break;
         case 'zip':
             decompressor = zlib.createUnzip;

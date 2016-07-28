@@ -27,28 +27,12 @@ export default function dbadd(file, col, logger) {
 
         fileReader.on("line", line => {
             parseLine(line, date).then(data => {
-
-                // get date key from parsed data
-                let dateKey;
-                for (const key of Object.keys(data)) {
-                    if (key != "article") dateKey = key;
-                }
-
-                // add data to database (add article if it not exists)
-                return col.updateOne(
-                    {article: (data.article)},
-                    {
-                        $set: {[dateKey]: (data[dateKey])},
-                        $setOnInsert: {article: (data.article)}
-                    },
-                    {upsert: true}
-                )
+                return addChunkToCollection([data], col);
             }).then(writeResult => {
               if (!writeResult) throw new Error("Data wasn't inserted"); 
-              if (writeResult.upsertedId && logger) {
-                logger(`Upserted datarow with id ${writeResult.upsertedId}`);
-              } else if (logger) {
-                logger("Modified datarow");
+              if (logger) {
+                logger(`Upserted ${writeResult.upsertedCount} datarows`);
+                logger(`Updated ${writeResult.modifiedCount} datarows`);
               }
               return writeResult;
             }).catch(reason => reject(reason));
@@ -60,3 +44,26 @@ export default function dbadd(file, col, logger) {
     })
 }
 
+function addChunkToCollection(chunk, col) {
+    const operations = chunk.map(datarow => {
+        // get date key from parsed data
+        let dateKey;
+        for (const key of Object.keys(datarow)) {
+            if (key != "article") dateKey = key;
+        }
+
+        // add data to database (add article if it not exists)
+        return {
+            updateOne: {
+                filter: {article: (datarow.article)},
+                update: {
+                    $set: {[dateKey]: (datarow[dateKey])},
+                    $setOnInsert: {article: (datarow.article)}
+                },
+                upsert: true
+            }
+        }
+    })
+
+    return col.bulkWrite(operations);
+}

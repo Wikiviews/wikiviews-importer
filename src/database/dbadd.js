@@ -1,7 +1,7 @@
-import {createInterface} from "readline";
 import {createReadStream} from "fs";
 import parseFileName from "./parsing/parseFileName";
 import parseLine from "./parsing/parseLine";
+import LineBuffer from "./input/LineBuffer";
 
 /**
  * adds the wikipedia pageview data in the specified file into the passed db connection
@@ -21,24 +21,25 @@ export default function dbadd(file, col, logger) {
     if (!date) return Promise.reject(new Error("No date in filename"));
 
     return new Promise((resolve, reject) => {
-        const fileReader = createInterface({
-            input: createReadStream(file)
-        });
+        const fileReader = createReadStream(file);
+        const buffer = new LineBuffer(50000);
+        fileReader.pipe(buffer);
 
-        fileReader.on("line", line => {
-            parseLine(line, date).then(data => {
-                return addChunkToCollection([data], col);
-            }).then(writeResult => {
+        buffer.on("data", lines => {
+            fileReader.pause()
+            const data = lines.map(line => parseLine(line, date))
+            addChunkToCollection(data, col).then(writeResult => {
               if (!writeResult) throw new Error("Data wasn't inserted"); 
               if (logger) {
                 logger(`Upserted ${writeResult.upsertedCount} datarows`);
                 logger(`Updated ${writeResult.modifiedCount} datarows`);
               }
-              return writeResult;
+              fileReader.resume();
+              return true;
             }).catch(reason => reject(reason));
         });
 
-        fileReader.on("close", () =>{
+        buffer.on("end", () =>{
             resolve(true);
         })
     })
@@ -65,5 +66,5 @@ function addChunkToCollection(chunk, col) {
         }
     })
 
-    return col.bulkWrite(operations);
+    return col.bulkWrite(operations, {w: 0, ordered: false});
 }

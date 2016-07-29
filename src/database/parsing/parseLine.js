@@ -7,16 +7,14 @@ import dateformat from "dateformat";
  * @param line {String} line to parse
  * @param date {Date} regarding date
  *
- * @return {Promise} Promise which is resolved with the parsed object
+ * @return {Object} The parsed object
  */
 export default function parseLine(line, date) {
     const fields = line.split(/\s/);
     const dateString = dateformat(date, "yyyy-mm-dd-HH");
 
-    const result = {
+    return {
         article: `${fields[0]}:${fields[1]}`,
         [dateString]: fields[2]
     };
-
-    return Promise.resolve(result);
 }

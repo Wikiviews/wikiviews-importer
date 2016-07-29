@@ -9,11 +9,12 @@ import LineBuffer from "./input/LineBuffer";
  *
  * @param file {String} filepath of the source file
  * @param col {Collection} mongodb collection object
+ * @param bufferSize {Number} number of suddenly parsed and inserted datarows
  * @param logger {Function} [Optional] Function which gets called with data for logging
  *
  * @return {Promise} Promise which is resolved with true and rejected with errors while inserting into db
  */
-export default function dbadd(file, col, logger) {
+export default function dbadd(file, col, bufferSize, logger) {
     if (!file) return Promise.reject(new Error("No source file specified"));
     if (!col) return Promise.reject(new Error("No database connection specified"));
 
@@ -22,7 +23,7 @@ export default function dbadd(file, col, logger) {
 
     return new Promise((resolve, reject) => {
         const fileReader = createReadStream(file);
-        const buffer = new LineBuffer(50000);
+        const buffer = new LineBuffer(Number(bufferSize));
         fileReader.pipe(buffer);
 
         buffer.on("data", lines => {
@@ -66,5 +67,5 @@ function addChunkToCollection(chunk, col) {
         }
     })
 
-    return col.bulkWrite(operations, {w: 0, ordered: false});
+    return col.bulkWrite(operations, {w: 1, ordered: false});
 }

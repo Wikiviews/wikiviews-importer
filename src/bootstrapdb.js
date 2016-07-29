@@ -27,6 +27,7 @@ const defaultArgs = {
     dbAddr: "127.0.0.1",
     dbDB: "wikipedia",
     dbCollection: "pagecounts",
+    dbBuffer: 500000,
     years: "b:2016-2016",
     months: "f:7-7",
     days: "j:1-31",
@@ -119,7 +120,7 @@ if (!args.noDownload) {
         }).then(path => {
             // add each downloaded file to the database (if not disabled)
             if (!args.noDB) {
-                return dbCollection.then(col => dbadd(path, col, console.log)).catch(reason => console.error(reason));
+                return dbCollection.then(col => dbadd(path, col, args.dbBuffer, console.log)).catch(reason => console.error(reason));
             } else {
                 return null;
             }
@@ -141,7 +142,7 @@ if (!args.noDownload) {
     }).then(files => {
         return files.map(file => {
             // add data to database if connection is set up (resolved -> then); ingore failure, because it was logged once after setup (rejected -> catch)
-            return dbCollection.then(col => dbadd(file, col, console.log)).then(dbAction => {
+            return dbCollection.then(col => dbadd(file, col, args.dbBuffer, console.log)).then(dbAction => {
                 // pass through dbAction status and current file
                 return {dbAction: dbAction, file: file};
             }).catch(reason => console.error(reason));

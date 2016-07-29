@@ -69,3 +69,18 @@ function addChunkToCollection(chunk, col) {
 
     return col.bulkWrite(operations, {w: 1, ordered: false});
 }
+
+/**
+ * sets up the database (create correct indexes)
+ *
+ * @access public
+ *
+ * @param col {Collection} Mongodb collection, which needs to be setup
+ *
+ * @return {Promise} Promise resolved with the collection or rejected with errors during setup
+ */
+export function dbsetup(col) {
+    return col.createIndex("article", {unique: true}).then(res => {
+        return col
+    })
+}

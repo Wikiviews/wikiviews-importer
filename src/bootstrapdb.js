@@ -1,6 +1,6 @@
 import getArguments from "minimist";
 import download from "./download/download";
-import dbadd from "./database/dbadd";
+import dbadd, {dbsetup} from "./database/dbadd";
 import * as zlib from "zlib";
 import {MongoClient} from "mongodb";
 import {readdir} from "fs";
@@ -43,7 +43,7 @@ if (!args.noDB) {
     dbCollection = MongoClient.connect(`mongodb://${args.dbAddr}:${args.dbPort}/${args.dbDB}`).then(db => db.collection(args.dbCollection)).then(col => {
         console.log(`Connected to mongodb at ${args.dbAddr}:${args.dbPort} with db ${args.dbDB} at collection ${args.dbCollection}`);
         return col;
-    });
+    }).then(col => dbsetup(col));
 
     dbCollection.catch(reason => {
         console.error(reason);

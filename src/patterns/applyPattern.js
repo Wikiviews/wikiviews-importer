@@ -11,7 +11,7 @@ export default function applyPattern(pattern, [rule, ...rules]) {
 
     if (!rule) return patterns;
 
-    return applyPattern([].concat.apply([], patterns.map(pattern => applyRule(pattern, rule))), rules); // [].concat.apply([9, arr) flattens arr
+    return applyPattern([].concat.apply([], patterns.map(pattern => applyRule(pattern, rule))), rules); // [].concat.apply([], arr) flattens arr
 }
 
 /**

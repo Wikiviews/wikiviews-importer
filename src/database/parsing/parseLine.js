@@ -15,6 +15,7 @@ export default function parseLine(line, date) {
 
     return {
         article: `${fields[0]}:${fields[1]}`,
-        [dateString]: fields[2]
+        date: date,
+        count: fields[2]
     };
 }

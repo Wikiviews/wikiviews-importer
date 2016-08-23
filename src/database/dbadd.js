@@ -1,73 +1,89 @@
-import {createReadStream} from "fs";
+import { createReadStream } from "fs";
 import parseFileName from "./parsing/parseFileName";
 import parseLine from "./parsing/parseLine";
 import LineBuffer from "./input/LineBuffer";
+import { createHash } from "crypto";
 
 /**
  * adds the wikipedia pageview data in the specified file into the passed db connection
  * @access public
  *
  * @param file {String} filepath of the source file
- * @param col {Collection} mongodb collection object
+ * @param client {Client} elasticsearch Client object
+ * @param index {string} index in which the datarow should be inserted
+ * @param type {string} type as which the datarow should be inserted
  * @param bufferSize {Number} number of suddenly parsed and inserted datarows
  * @param logger {Function} [Optional] Function which gets called with data for logging
  *
  * @return {Promise} Promise which is resolved with true and rejected with errors while inserting into db
  */
-export default function dbadd(file, col, bufferSize, logger) {
-    if (!file) return Promise.reject(new Error("No source file specified"));
-    if (!col) return Promise.reject(new Error("No database connection specified"));
+export default function dbadd(file, { client, index, type }, bufferSize, logger) {
+  if (!file) return Promise.reject(new Error("No source file specified"));
+  if (!client) return Promise.reject(new Error("No database connection specified"));
+  if (!index) return Promise.reject(new Error("No database index specified"));
+  if (!type) return Promise.reject(new Error("No database type specified"));
 
-    const date = parseFileName(file);
-    if (!date) return Promise.reject(new Error("No date in filename"));
+  const date = parseFileName(file);
+  if (!date) return Promise.reject(new Error("No date in filename"));
 
-    return new Promise((resolve, reject) => {
-        const fileReader = createReadStream(file);
-        const buffer = new LineBuffer(Number(bufferSize));
-        fileReader.pipe(buffer);
+  return new Promise((resolve, reject) => {
+    const fileReader = createReadStream(file);
+    const buffer = new LineBuffer(Number(bufferSize));
+    fileReader.pipe(buffer);
 
-        buffer.on("data", lines => {
-            fileReader.pause()
-            const data = lines.map(line => parseLine(line, date))
-            addChunkToCollection(data, col).then(writeResult => {
-              if (!writeResult) throw new Error("Data wasn't inserted"); 
-              if (logger) {
-                logger(`Upserted ${writeResult.upsertedCount} datarows`);
-                logger(`Updated ${writeResult.modifiedCount} datarows`);
-              }
-              fileReader.resume();
-              return true;
-            }).catch(reason => reject(reason));
-        });
+    buffer.on("data", lines => {
+      fileReader.pause();
+      const data = lines.map(line => parseLine(line, date));
+      addChunkToIndex(data, client, index, type).then(result => {
+        if (!result) throw new Error("Data wasn't inserted");
+        if (logger) {
+          logger(result);
+        }
+        fileReader.resume();
+        return true;
+      }).catch(reason => reject(reason));
+    });
 
-        buffer.on("end", () =>{
-            resolve(true);
-        })
+    buffer.on("end", () => {
+      resolve(file);
     })
+  })
 }
 
-function addChunkToCollection(chunk, col) {
-    const operations = chunk.map(datarow => {
-        // get date key from parsed data
-        let dateKey;
-        for (const key of Object.keys(datarow)) {
-            if (key != "article") dateKey = key;
-        }
+function addChunkToIndex(chunk, client, index, type) {
+  const operations = [].concat().apply([], chunk.map(datarow => {
+    const id = createHash(datarow.article);
 
-        // add data to database (add article if it not exists)
-        return {
-            updateOne: {
-                filter: {article: (datarow.article)},
-                update: {
-                    $set: {[dateKey]: (datarow[dateKey])},
-                    $setOnInsert: {article: (datarow.article)}
-                },
-                upsert: true
+    return [
+      {update: {_index: index, _type: type, _id: id, _retry_on_conflict : 5}},
+      {
+        script : "ctx._source.counts+=new_count",
+        params : {
+          new_count: {
+            date: datarow.date.toISOString(),
+            count: datarow.count
+          }
+        },
+        upsert: {
+          article: datarow.article,
+          counts: [
+            {
+              date: datarow.date.toISOString(),
+              count: datarow.count
             }
+          ]
         }
-    })
+      }
+    ]
+  }));
 
-    return col.bulkWrite(operations, {w: 1, ordered: false});
+  return client.bulk(operations);
+}
+
+function getHash(inputString) {
+  return createHash('sha512')
+    .update(inputString)
+    .digest('hex');
 }
 
 /**
@@ -80,7 +96,7 @@ function addChunkToCollection(chunk, col) {
  * @return {Promise} Promise resolved with the collection or rejected with errors during setup
  */
 export function dbsetup(col) {
-    return col.createIndex("article", {unique: true}).then(res => {
-        return col
-    })
+  return col.createIndex("article", { unique: true }).then(res => {
+    return col
+  })
 }

@@ -2,3 +2,4 @@ lib/**
 node_modules/**
 .tern-project
 test.js
+.idea/**

@@ -55,10 +55,11 @@ function addChunkToIndex(chunk, client, index, type) {
     const id = getHash(datarow.article);
 
     return [
-      {update: {_index: index, _type: type, _id: id, _retry_on_conflict : 5}},
+      { update: { _index: index, _type: type, _id: id, _retry_on_conflict: 5 } },
       {
-        script : "ctx._source.counts+=new_count",
-        params : {
+        lang: "groovy",
+        script_file: "add-count",
+        params: {
           new_count: {
             date: datarow.date.toISOString(),
             count: Number(datarow.count)
@@ -77,7 +78,7 @@ function addChunkToIndex(chunk, client, index, type) {
     ]
   }));
 
-  return client.bulk({body: operations});
+  return client.bulk({ body: operations });
 }
 
 function getHash(inputString) {
@@ -91,12 +92,35 @@ function getHash(inputString) {
  *
  * @access public
  *
- * @param col {Collection} Mongodb collection, which needs to be setup
+ * @param client {Client} elasticsearch Client object
+ * @param index {string} index in which the datarow should be inserted
+ * @param type {string} type as which the datarow should be inserted
  *
  * @return {Promise} Promise resolved with the collection or rejected with errors during setup
  */
-export function dbsetup(col) {
-  return col.createIndex("article", { unique: true }).then(res => {
-    return col
-  })
+export function dbsetup(client, index, type) {
+  return client.indices.create({
+    index: index,
+    body: {
+      "settings": {
+        "number_of_shards": 10,
+        "number_of_replicas": 0
+      },
+      "mappings": {
+        [type]: {
+          "properties": {
+            "name": { "type": "string" },
+            "counts": {
+              "type": "nested",
+              "properties": {
+                "date": { "type": "date", "format": "strict_date_time" },
+                "count": { "type": "long" }
+              }
+            }
+          }
+        }
+      }
+    }
+
+  });
 }

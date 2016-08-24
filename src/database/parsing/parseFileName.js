@@ -10,7 +10,7 @@ export default function parseFileName(filename) {
     const match = /(\d{4})-(\d{2})-(\d{2})-(\d{2})/.exec(filename);
 
     if (match) {
-        return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]));
+        return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4])));
     } else {
         return false;
     }

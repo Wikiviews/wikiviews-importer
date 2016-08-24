@@ -103,7 +103,7 @@ export function downloadChunks(paths, chunkSize, decompressor, launcher) {
     } else {
       return downloadFile(identifier.source, identifier.dest, decompressor());
     }
-  })
+  });
 
   Promise.all(currentPromises).then((data) => {
     nextLauncher.emit('launch')

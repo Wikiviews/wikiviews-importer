@@ -4,6 +4,7 @@ import applyPattern from "./patterns/applyPattern";
 import dbadd, { dbsetup } from "./database/dbadd";
 import { getDBClient } from "./database/client";
 import fileExists from "file-exists";
+import * as path from "path";
 
 // setup arguments
 const args = parseArguments(process.argv);
@@ -18,14 +19,14 @@ const dataPaths = !args.noDownload ?
     destPattern: args.destFilePattern,
     dir: args.destDir
   }, getDecompressor(args), args.flowControl) :
-  applyPattern(args.destFilePattern, rules).map(fileName => path.resolve(args.destDir, fileName)).filter(fileExists).map(Promise.resolve);
+  applyPattern(args.destFilePattern, rules).map(fileName => path.resolve(args.destDir, fileName)).filter(fileExists).map(Promise.resolve.bind(Promise));
 
 // log paths when they exist
 dataPaths.forEach(pathPrms => pathPrms.then(path => console.log(`${path} is available`)));
 
 if (!args.noDB) {
   const insertedPaths = dataPaths.map(pathPrms => {
-    pathPrms.then(path => dbadd(path, { client: getDBClient(args.dbAddr, args.dbPort), index: args.dbIndex, type: args.dbType}, args.dbBuffer, console.log));
+    return pathPrms.then(path => dbadd(path, { client: getDBClient(args.dbAddr, args.dbPort), index: args.dbIndex, type: args.dbType}, args.dbBuffer, console.log));
   });
 
   insertedPaths.map(pathPrms => {

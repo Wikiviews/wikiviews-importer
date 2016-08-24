@@ -51,8 +51,8 @@ export default function dbadd(file, { client, index, type }, bufferSize, logger)
 }
 
 function addChunkToIndex(chunk, client, index, type) {
-  const operations = [].concat().apply([], chunk.map(datarow => {
-    const id = createHash(datarow.article);
+  const operations = [].concat.apply([], chunk.map(datarow => {
+    const id = getHash(datarow.article);
 
     return [
       {update: {_index: index, _type: type, _id: id, _retry_on_conflict : 5}},
@@ -61,7 +61,7 @@ function addChunkToIndex(chunk, client, index, type) {
         params : {
           new_count: {
             date: datarow.date.toISOString(),
-            count: datarow.count
+            count: Number(datarow.count)
           }
         },
         upsert: {
@@ -69,7 +69,7 @@ function addChunkToIndex(chunk, client, index, type) {
           counts: [
             {
               date: datarow.date.toISOString(),
-              count: datarow.count
+              count: Number(datarow.count)
             }
           ]
         }
@@ -77,7 +77,7 @@ function addChunkToIndex(chunk, client, index, type) {
     ]
   }));
 
-  return client.bulk(operations);
+  return client.bulk({body: operations});
 }
 
 function getHash(inputString) {

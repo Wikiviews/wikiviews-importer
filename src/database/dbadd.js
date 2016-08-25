@@ -67,6 +67,7 @@ function addChunkToIndex(chunk, client, index, type) {
         },
         upsert: {
           article: datarow.article,
+          exact_article: datarow.article,
           counts: [
             {
               date: datarow.date.toISOString(),
@@ -82,7 +83,7 @@ function addChunkToIndex(chunk, client, index, type) {
 }
 
 function getHash(inputString) {
-  return createHash('sha512')
+  return createHash('sha1')
     .update(inputString)
     .digest('hex');
 }
@@ -109,7 +110,11 @@ export function dbsetup(client, index, type) {
       "mappings": {
         [type]: {
           "properties": {
-            "name": { "type": "string" },
+            "article": { "type": "string" },
+            "exact_article": {
+              "type":  "string",
+              "index": "not_analyzed"
+            },
             "counts": {
               "type": "nested",
               "properties": {

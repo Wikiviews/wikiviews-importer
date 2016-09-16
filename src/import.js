@@ -1,7 +1,7 @@
 import { parseArguments, getDecompressor, getPatternRules } from "./arguments/arguments";
 import download from "./download/download";
 import applyPattern from "./patterns/applyPattern";
-import dbadd, { dbsetup } from "./database/dbadd";
+import dbadd from "./database/dbadd";
 import { getDBClient } from "./database/client";
 import fileExists from "file-exists";
 import * as path from "path";
@@ -25,8 +25,6 @@ const dataPaths = !args.noDownload ?
 dataPaths.forEach(pathPrms => pathPrms.then(path => console.log(`${path} is available`)));
 
 if (!args.noDB) {
-  dbsetup(getDBClient(args.dbAddr, args.dbPort), args.dbIndex, args.dbType).then(res => console.log(res));
-
   const insertedPaths = dataPaths.map(pathPrms => {
     return pathPrms.then(path => dbadd(path, { client: getDBClient(args.dbAddr, args.dbPort), index: args.dbIndex, type: args.dbType}, args.dbBuffer, console.log));
   });

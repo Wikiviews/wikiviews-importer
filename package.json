@@ -1,7 +1,7 @@
 {
-  "name": "angular2-tables-testdata-provider",
-  "version": "1.0.0",
-  "description": "Generator for test data for the angular2-tables evaluation app",
+  "name": "wikiviews-importer",
+  "version": "1.0.0-beta",
+  "description": "Importer for the Wikipedia Pageviews (https://dumps.wikimedia.org/other/pageviews/) dataset.",
   "main": "src/index.js",
   "scripts": {
     "test": "mocha --recursive --ui tdd --compilers js:babel-core/register",
@@ -17,16 +17,16 @@
   "author": "DevWurm",
   "devDependencies": {
     "babel-cli": "6.10.1",
-    "babel-core": "^6.11.4",
+    "babel-core": "6.11.4",
     "babel-preset-es2015": "6.9.0",
     "chai": "3.5.0",
     "mocha": "2.5.3"
   },
   "license": "MIT",
   "dependencies": {
-    "dateformat": "^1.0.12",
-    "elasticsearch": "^11.0.1",
-    "file-exists": "^2.0.0",
-    "minimist": "^1.2.0"
+    "dateformat": "1.0.12",
+    "elasticsearch": "11.0.1",
+    "file-exists": "2.0.0",
+    "minimist": "1.2.0"
   }
 }

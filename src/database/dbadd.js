@@ -58,20 +58,20 @@ function addChunkToIndex(chunk, client, index, type) {
       { update: { _index: index, _type: type, _id: id, _retry_on_conflict: 5 } },
       {
         lang: "groovy",
-        script_file: "add-count",
+        script_file: "add-date",
         params: {
-          new_count: {
+          new_date: {
             date: datarow.date.toISOString(),
-            count: Number(datarow.count)
+            views: Number(datarow.views)
           }
         },
         upsert: {
           article: datarow.article,
           exact_article: datarow.article,
-          counts: [
+          views: [
             {
               date: datarow.date.toISOString(),
-              count: Number(datarow.count)
+              views: Number(datarow.views)
             }
           ]
         }
@@ -115,11 +115,11 @@ export function dbsetup(client, index, type) {
               "type":  "string",
               "index": "not_analyzed"
             },
-            "counts": {
+            "views": {
               "type": "nested",
               "properties": {
                 "date": { "type": "date", "format": "strict_date_time" },
-                "count": { "type": "long" }
+                "views": { "type": "long" }
               }
             }
           }

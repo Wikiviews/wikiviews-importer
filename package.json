@@ -27,6 +27,7 @@
     "dateformat": "1.0.12",
     "elasticsearch": "11.0.1",
     "file-exists": "2.0.0",
-    "minimist": "1.2.0"
+    "minimist": "1.2.0",
+    "pattern-expander": "1.0.1"
   }
 }

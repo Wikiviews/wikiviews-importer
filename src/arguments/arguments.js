@@ -1,13 +1,6 @@
 import getArguments from "minimist";
 import * as zlib from "zlib";
-
-class PatternRange {
-  constructor(variable, start, end) {
-    this.variable = variable;
-    this.start = start;
-    this.end = end;
-  }
-}
+import {Rule} from 'pattern-expander';
 
 export function parseArguments(argv) {
   const cliArgs = getArguments(argv);
@@ -36,56 +29,40 @@ export function parseArguments(argv) {
 
 export function getPatternRules(args) {
   // parse ranges
-  const years = parsePatternRange(args.years);
+  const years = parsePatternRule(args.years);
   if (!years) {
     console.error(new Error("Wrong year range specified"));
     process.exit(1);
   }
 
-  const months = parsePatternRange(args.months);
+  const months = parsePatternRule(args.months);
   if (!months) {
     console.error(new Error("Wrong month range specified"))
     process.exit(1);
   }
 
-  const days = parsePatternRange(args.days);
+  const days = parsePatternRule(args.days);
   if (!days) {
     console.error(new Error("Wrong day range specified"))
     process.exit(1);
   }
 
-  const hours = parsePatternRange(args.hours);
+  const hours = parsePatternRule(args.hours);
   if (!hours) {
     console.error(new Error("Wrong hour range specified"))
     process.exit(1);
   }
 
   // setup pattern rules
-  const rules = [{
-    variable: years.variable,
-    from: years.start,
-    to: years.end
-  }, {
-    variable: months.variable,
-    from: months.start,
-    to: months.end
-  }, {
-    variable: days.variable,
-    from: days.start,
-    to: days.end
-  }, {
-    variable: hours.variable,
-    from: hours.start,
-    to: hours.end
-  }];
+  const rules = [years, months, days, hours];
 
   return rules;
 }
 
-function parsePatternRange(rangeString) {
+function parsePatternRule(rangeString) {
   const match = /(\w):(\d+)-(\d+)/g.exec(rangeString);
 
-  return (match) ? new PatternRange(match[1], match[2], match[3]) : null;
+  return (match) ? new Rule(match[1], Number(match[2]), Number(match[3])) : null;
 }
 
 export function getDecompressor(args) {

@@ -1,10 +1,10 @@
 import { parseArguments, getDecompressor, getPatternRules } from "./arguments/arguments";
 import download from "./download/download";
-import applyPattern from "./patterns/applyPattern";
 import dbadd from "./database/dbadd";
 import { getDBClient } from "./database/client";
 import fileExists from "file-exists";
 import * as path from "path";
+import {expand} from 'pattern-expander';
 
 // setup arguments
 const args = parseArguments(process.argv);
@@ -19,7 +19,7 @@ const dataPaths = !args.noDownload ?
     destPattern: args.destFilePattern,
     dir: args.destDir
   }, getDecompressor(args), args.flowControl) :
-  applyPattern(args.destFilePattern, rules).map(fileName => path.resolve(args.destDir, fileName)).filter(fileExists).map(Promise.resolve.bind(Promise));
+  expand(args.destFilePattern, rules).map(fileName => path.resolve(args.destDir, fileName)).filter(fileExists).map(Promise.resolve.bind(Promise));
 
 // log paths when they exist
 dataPaths.forEach(pathPrms => pathPrms.then(path => console.log(`${path} is available`)));

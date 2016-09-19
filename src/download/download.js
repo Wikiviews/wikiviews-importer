@@ -9,8 +9,8 @@ import { get as httpRequest } from "http";
 import { get as httpsRequest } from "https";
 import { parse as parseUrl } from "url";
 import { Transform, Writable } from "stream";
-import applyPattern from "../patterns/applyPattern";
 import { EventEmitter } from "events";
+import {expand} from 'pattern-expander';
 
 
 /**
@@ -64,8 +64,8 @@ class LaunchEmitter extends EventEmitter {
  * @return {[Promise]} Array of promises of which each either contains the filepath of the resulting file or the resulting data
  */
 export default function download(sourcePattern, rules, { destPattern, dir }, decompressor, chunkSize) {
-  const sources = applyPattern(sourcePattern, rules);
-  const dests = destPattern ? applyPattern(destPattern, rules) : null;
+  const sources = expand(sourcePattern, rules);
+  const dests = destPattern ? expand(destPattern, rules) : null;
 
   const paths = sources.map((src, key) => {
     return dests ? { source: src, dest: path.resolve(dir, dests[key]) } : { source: src };

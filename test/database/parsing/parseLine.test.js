@@ -1,5 +1,5 @@
 import * as chai from "chai"
-import parseLine from "../../../src/database/parsing/parseLine";
+import parseLine from "../../../src/elasticsearch/parsing/parseLine";
 
 const assert = chai.assert;
 

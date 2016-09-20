@@ -17,11 +17,11 @@ import { createHash } from "crypto";
  *
  * @return {Promise} Promise which is resolved with true and rejected with errors while inserting into db
  */
-export default function dbadd(file, { client, index, type }, bufferSize, logger) {
+export default function insert(file, { client, index, type }, bufferSize, logger) {
   if (!file) return Promise.reject(new Error("No source file specified"));
-  if (!client) return Promise.reject(new Error("No database connection specified"));
-  if (!index) return Promise.reject(new Error("No database index specified"));
-  if (!type) return Promise.reject(new Error("No database type specified"));
+  if (!client) return Promise.reject(new Error("No elasticsearch connection specified"));
+  if (!index) return Promise.reject(new Error("No elasticsearch index specified"));
+  if (!type) return Promise.reject(new Error("No elasticsearch type specified"));
 
   const date = parseFileName(file);
   if (!date) return Promise.reject(new Error("No date in filename"));

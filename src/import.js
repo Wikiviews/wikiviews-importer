@@ -1,7 +1,7 @@
 import { parseArguments, getDecompressor, getPatternRules } from "./arguments/arguments";
 import download from "./download/download";
-import dbadd from "./database/dbadd";
-import { getDBClient } from "./database/client";
+import insert from "./elasticsearch/insert";
+import { getDBClient } from "./elasticsearch/client";
 import fileExists from "file-exists";
 import * as path from "path";
 import {expand} from 'pattern-expander';
@@ -26,7 +26,7 @@ dataPaths.forEach(pathPrms => pathPrms.then(path => console.log(`${path} is avai
 
 if (!args.noDB) {
   const insertedPaths = dataPaths.map(pathPrms => {
-    return pathPrms.then(path => dbadd(path, { client: getDBClient(args.dbAddr, args.dbPort), index: args.dbIndex, type: args.dbType}, args.dbBuffer, console.log));
+    return pathPrms.then(path => insert(path, { client: getDBClient(args.dbAddr, args.dbPort), index: args.dbIndex, type: args.dbType}, args.dbBuffer, console.log));
   });
 
   insertedPaths.map(pathPrms => {

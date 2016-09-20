@@ -1,4 +1,4 @@
-import { parseArguments, getDecompressor, getPatternRules } from "./arguments/arguments";
+import { parseArguments, getDecompressor, getExpansionRules } from "./arguments/arguments";
 import download from "./download/download";
 import insert from "./elasticsearch/insert";
 import { getDBClient } from "./elasticsearch/client";
@@ -10,7 +10,7 @@ import {expand} from 'pattern-expander';
 const args = parseArguments(process.argv);
 
 // get rules for patterns
-const rules = getPatternRules(args);
+const rules = getExpansionRules(args);
 
 // if data should be downloaded, download files and return file paths in promises
 // if data shouldn't be downloaded, create a promise with the file path for every file, which exists in the destDir

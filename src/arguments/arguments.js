@@ -27,27 +27,27 @@ export function parseArguments(argv) {
   return Object.assign(defaultArgs, cliArgs);
 }
 
-export function getPatternRules(args) {
+export function getExpansionRules(args) {
   // parse ranges
-  const years = parsePatternRule(args.years);
+  const years = parseExpansionRule(args.years);
   if (!years) {
     console.error(new Error("Wrong year range specified"));
     process.exit(1);
   }
 
-  const months = parsePatternRule(args.months);
+  const months = parseExpansionRule(args.months);
   if (!months) {
     console.error(new Error("Wrong month range specified"))
     process.exit(1);
   }
 
-  const days = parsePatternRule(args.days);
+  const days = parseExpansionRule(args.days);
   if (!days) {
     console.error(new Error("Wrong day range specified"))
     process.exit(1);
   }
 
-  const hours = parsePatternRule(args.hours);
+  const hours = parseExpansionRule(args.hours);
   if (!hours) {
     console.error(new Error("Wrong hour range specified"))
     process.exit(1);
@@ -59,7 +59,7 @@ export function getPatternRules(args) {
   return rules;
 }
 
-function parsePatternRule(rangeString) {
+function parseExpansionRule(rangeString) {
   const match = /(\w):(\d+)-(\d+)/g.exec(rangeString);
 
   return (match) ? new Rule(match[1], Number(match[2]), Number(match[3])) : null;

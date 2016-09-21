@@ -1,44 +1,41 @@
+// @flow
+
 import { createReadStream } from "fs";
-import parseFileName from "./parsing/parseFileName";
-import parseLine from "./parsing/parseLine";
 import LineBuffer from "./input/LineBuffer";
 import { createHash } from "crypto";
+import type { ElasticsearchSettings } from '../settings/settings';
+import { fileNameToDate } from './parsing/parsing';
+import { parseLine } from './parsing/parsing';
+import type { Dataset } from './parsing/parsing';
+import { Client } from 'elasticsearch';
 
 /**
- * adds the wikipedia pageview data in the specified file into the passed db connection
+ * adds the Wikipedia pageview data in the specified file into the specified Elasticsearch instance
  * @access public
  *
- * @param file {String} filepath of the source file
- * @param client {Client} elasticsearch Client object
- * @param index {string} index in which the datarow should be inserted
- * @param type {string} type as which the datarow should be inserted
- * @param bufferSize {Number} number of suddenly parsed and inserted datarows
- * @param logger {Function} [Optional] Function which gets called with data for logging
+ * @param file {String} file path of the source file
+ * @param settings {ElasticsearchSettings} parameters for the insertion process
  *
- * @return {Promise} Promise which is resolved with true and rejected with errors while inserting into db
+ * @return {Promise} Promise which is resolved with the source file Path and rejected with errors while inserting into db
  */
-export default function insert(file, { client, index, type }, bufferSize, logger) {
-  if (!file) return Promise.reject(new Error("No source file specified"));
-  if (!client) return Promise.reject(new Error("No elasticsearch connection specified"));
-  if (!index) return Promise.reject(new Error("No elasticsearch index specified"));
-  if (!type) return Promise.reject(new Error("No elasticsearch type specified"));
-
-  const date = parseFileName(file);
+export default function insert(file: string, settings: ElasticsearchSettings): Promise<string> {
+  const date = fileNameToDate(file);
   if (!date) return Promise.reject(new Error("No date in filename"));
 
   return new Promise((resolve, reject) => {
     const fileReader = createReadStream(file);
-    const buffer = new LineBuffer(Number(bufferSize));
+    const buffer = new LineBuffer(settings.batch);
     fileReader.pipe(buffer);
 
     buffer.on("data", lines => {
       fileReader.pause();
-      const data = lines.map(line => parseLine(line, date));
-      addChunkToIndex(data, client, index, type).then(result => {
+      const data = lines.map(line => parseLine(line));
+      addChunkToIndex(data, date, settings).then(result => {
         if (!result) throw new Error("Data wasn't inserted");
-        if (logger) {
-          logger(result);
-        }
+
+        // log insertion information
+        console.log(result);
+
         fileReader.resume();
         return true;
       }).catch(reason => reject(reason));
@@ -50,19 +47,20 @@ export default function insert(file, { client, index, type }, bufferSize, logger
   })
 }
 
-function addChunkToIndex(chunk, client, index, type) {
-  const operations = [].concat.apply([], chunk.map(datarow => {
+function addChunkToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings): Promise<string> {
+  const client = getClient(settings.address, settings.port);
+  const operations = [].concat.apply([], data.map(datarow => {
     const id = getHash(datarow.article);
 
     return [
-      { update: { _index: index, _type: type, _id: id, _retry_on_conflict: 5 } },
+      { update: { _index: settings.index, _type: settings.type, _id: id, _retry_on_conflict: 5 } },
       {
         lang: "groovy",
         script_file: "add-date",
         params: {
           new_date: {
-            date: datarow.date.toISOString(),
-            views: Number(datarow.views)
+            date: date.toISOString(),
+            views: datarow.views
           }
         },
         upsert: {
@@ -70,8 +68,8 @@ function addChunkToIndex(chunk, client, index, type) {
           exact_article: datarow.article,
           views: [
             {
-              date: datarow.date.toISOString(),
-              views: Number(datarow.views)
+              date: date.toISOString(),
+              views: datarow.views
             }
           ]
         }
@@ -82,7 +80,14 @@ function addChunkToIndex(chunk, client, index, type) {
   return client.bulk({ body: operations });
 }
 
-function getHash(inputString) {
+type ElasticsearchClient = {
+  bulk: Function
+}
+export function getClient(address: string, port: number): ElasticsearchClient {
+ return new Client({host: `${address}:${String(port)}`});
+}
+
+function getHash(inputString: string): string {
   return createHash('sha1')
     .update(inputString)
     .digest('hex');

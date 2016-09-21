@@ -34,7 +34,7 @@
     "babel-plugin-transform-class-properties": "6.11.5",
     "babel-plugin-transform-flow-strip-types": "6.14.0",
     "babel-register": "6.14.0",
-    "coveralls": "^2.11.13",
+    "coveralls": "2.11.13",
     "flow-bin": "0.32.0",
     "istanbul": "1.0.0-alpha.2"
   },
@@ -44,6 +44,6 @@
     "elasticsearch": "11.0.1",
     "file-exists": "2.0.0",
     "minimist": "1.2.0",
-    "pattern-expander": "1.0.1"
+    "pattern-expander": "1.0.2"
   }
 }

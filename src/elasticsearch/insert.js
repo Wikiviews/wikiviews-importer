@@ -34,7 +34,7 @@ export default function insert(file: string, settings: ElasticsearchSettings): P
         if (!result) throw new Error("Data wasn't inserted");
 
         // log insertion information
-        console.log(result);
+        console.log(`Inserted ${result.length} rows into Elasticsearch`);
 
         fileReader.resume();
         return true;

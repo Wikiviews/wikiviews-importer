@@ -25,9 +25,9 @@ if (settings.tasks.elasticsearch) {
     return pathPrms.then(path => insert(path, settings.elasticsearch));
   }).map(pathPrms => {
     pathPrms.then(path => {
-      console.log(`${path} inserted into database`);
+      console.log(`${path} inserted into Elasticsearch`);
     }).catch(reason => {
-      console.error(`Error while inserting into database: ${reason}`);
+      console.error(`Error while inserting into Elasticsearch: ${reason}`);
     })
   })
 }

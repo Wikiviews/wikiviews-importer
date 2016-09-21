@@ -1,35 +1,29 @@
-import { parseArguments, getDecompressor, getExpansionRules } from "./arguments/arguments";
+// @flow
 import download from "./download/download";
 import insert from "./elasticsearch/insert";
-import { getESClient } from "./elasticsearch/client";
 import fileExists from "file-exists";
 import * as path from "path";
 import {expand} from 'pattern-expander';
+import { getSettings } from './settings/settings';
+import type { DownloadSettings } from './settings/settings';
 
-// setup arguments
-const args = parseArguments(process.argv);
-
-// get rules for patterns
-const rules = getExpansionRules(args);
+const settings = getSettings(process.argv);
 
 // if data should be downloaded, download files and return file paths in promises
 // if data shouldn't be downloaded, create a promise with the file path for every file, which exists in the destDir
-const dataPaths = !args.noDownload ?
-  download(args.sourcePattern, rules, {
-    destPattern: args.destFilePattern,
-    dir: args.destDir
-  }, getDecompressor(args), args.flowControl) :
-  expand(args.destFilePattern, rules).map(fileName => path.resolve(args.destDir, fileName)).filter(fileExists).map(Promise.resolve.bind(Promise));
+const dataPaths = settings.tasks.download ?
+  download(settings.download) :
+  getPresentPaths(settings.download);
 
 // log paths when they exist
-dataPaths.forEach(pathPrms => pathPrms.then(path => console.log(`${path} is available`)));
+dataPaths.forEach(pathPrms => {
+  return pathPrms.then(path => console.log(`${path} is available`))
+});
 
-if (!args.noDB) {
-  const insertedPaths = dataPaths.map(pathPrms => {
-    return pathPrms.then(path => insert(path, { client: getESClient(args.dbAddr, args.dbPort), index: args.dbIndex, type: args.dbType}, args.dbBuffer, console.log));
-  });
-
-  insertedPaths.map(pathPrms => {
+if (settings.tasks.elasticsearch) {
+  dataPaths.map(pathPrms => {
+    return pathPrms.then(path => insert(path, settings.elasticsearch));
+  }).map(pathPrms => {
     pathPrms.then(path => {
       console.log(`${path} inserted into database`);
     }).catch(reason => {
@@ -38,3 +32,9 @@ if (!args.noDB) {
   })
 }
 
+function getPresentPaths(settings: DownloadSettings): Promise<string>[] {
+  const expansionRules = [settings.years, settings.months, settings.days, settings.hours];
+  return expand(settings.output, expansionRules)
+    .map(fileName => path.resolve(settings.destination, fileName))
+    .filter(fileExists).map(Promise.resolve.bind(Promise));
+}

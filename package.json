@@ -1,8 +1,8 @@
 {
-  "name": "wikiviews-importer",
+  "name": "@wikiviews/wikiviews-importer",
   "version": "1.0.0-beta",
   "description": "Importer for the Wikipedia Pageviews (https://dumps.wikimedia.org/other/pageviews/) dataset.",
-  "main": "lib/index.js",
+  "main": "lib/import.js",
   "bin": {
     "wv-import": "lib/import.js"
   },
@@ -21,8 +21,11 @@
     "build:dev": "babel src -d lib --source-maps \"both\""
   },
   "keywords": [
-    "DB",
-    "data"
+    "Elasticsearch",
+    "data",
+    "dataset",
+    "import",
+    "Wikiviews"
   ],
   "author": "DevWurm",
   "devDependencies": {

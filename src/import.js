@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // @flow
-import download from "./download/download";
-import insert from "./elasticsearch/insert";
+import { download } from "./download/download";
+import { insert } from "./elasticsearch/insert";
 import fileExists from "file-exists";
 import * as path from "path";
 import {expand} from 'pattern-expander';

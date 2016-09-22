@@ -36,7 +36,7 @@ class LaunchEmitter extends EventEmitter {
  *
  * @return {[Promise]} Array of promises of which each either contain the file path of the resulting file or the resulting data
  */
-export default function download(settings: DownloadSettings): Promise<string>[] {
+export function download(settings: DownloadSettings): Promise<string>[] {
   const expansionRules = [settings.years, settings.months, settings.days, settings.hours];
   const sources = expand(settings.source, expansionRules);
   const outputs = expand(settings.output, expansionRules);
@@ -48,11 +48,12 @@ export default function download(settings: DownloadSettings): Promise<string>[] 
 
   return downloadChunks(paths, (settings.concurrent || paths.length), decompressorFactory);
 }
+export default download;
 
 /**
  * downloads a row of files in chunks
  *
- * @access public
+ * @access private
  *
  * @param paths {[Object]} source and destination paths for the files, which should be downloaded
  * @param chunkSize {Number} number of concurrently downloaded files
@@ -61,7 +62,7 @@ export default function download(settings: DownloadSettings): Promise<string>[] 
  *
  * @return {[Promise]} Array of Promises, which either contain the file path of the resulting files or the resulting data
  */
-export function downloadChunks(paths: {source: string, dest: string}[], chunkSize: number, decompressorFactory: ?Function<Transform>, launcher: ?EventEmitter): Promise<string>[] {
+function downloadChunks(paths: {source: string, dest: string}[], chunkSize: number, decompressorFactory: ?Function<Transform>, launcher: ?EventEmitter): Promise<string>[] {
   if (paths.length < 1) {
     return [];
   } else if (paths.length <= chunkSize) {
@@ -92,7 +93,7 @@ export function downloadChunks(paths: {source: string, dest: string}[], chunkSiz
 
 /**
  * downloads a file
- * @access public
+ * @access private
  *
  * @param url {String} url of the source file
  * @param target {String} target file
@@ -101,7 +102,7 @@ export function downloadChunks(paths: {source: string, dest: string}[], chunkSiz
  *
  * @return {Promise} Promise which is either resolved with the target path or rejected with errors while downloading
  */
-export function downloadFile(url: string, target: string, decompressorFactory: ?Function<Transform>, launcher: ?LaunchEmitter): Promise<string> {
+function downloadFile(url: string, target: string, decompressorFactory: ?Function<Transform>, launcher: ?LaunchEmitter): Promise<string> {
   return new Promise((resolve, reject) => {
     if (launcher) {
       launcher.on('launch', () => performDownload(resolve, reject));
@@ -133,6 +134,15 @@ export function downloadFile(url: string, target: string, decompressorFactory: ?
   }
 }
 
+/**
+ * Gets a factory for a decompressor stream for the compressions 'gz' and 'zip'
+ *
+ * @access private
+ *
+ * @param compression {String} compression name
+ *
+ * @return {?Function<Transform>} The decompressor factory or null, if the compression is not known
+ */
 function getDecompressorFactory(compression: string): ?Function<Transform> {
   switch (compression) {
     case 'gz':

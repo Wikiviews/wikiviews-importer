@@ -1,5 +1,16 @@
 // @flow
 
+/**
+ * Merges a list of objects and all their plain sub-objects.
+ * Objects are merged from left to right. So the most right objects properties override other existing properties.
+ *
+ * @access public
+ *
+ * @param object {Object} The first object to merge.
+ * @param objects {Object[]} Other objects to merge.
+ *
+ * @return {Object} The merged object.
+ */
 export function mergeObjects(object: Object, ...objects: Object[]): Object {
   if (objects.length < 1) {
     return object;

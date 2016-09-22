@@ -3,7 +3,7 @@ import {Transform} from "stream";
 /**
  * transform stream which consumes a Readable stream and bufferes a specific number of lines until it emits data
  */
-export default class LineBuffer extends Transform {
+export class LineBuffer extends Transform {
     constructor(bufferSize, encoding) {
         super({objectMode: true});
 
@@ -40,3 +40,4 @@ export default class LineBuffer extends Transform {
         done();
     }
 }
+export default LineBuffer;

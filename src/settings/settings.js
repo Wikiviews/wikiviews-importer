@@ -39,7 +39,16 @@ export type ElasticsearchSettings = {
   batch: number
 }
 
-export function getSettings(argv: [string]): Settings {
+/**
+ * Gets the application settings from the specified commandline arguments
+ *
+ * @access public
+ *
+ * @param argv {string[]} The commandline arguments.
+ *
+ * @return {Settings} The application settings.
+ */
+export function getSettings(argv: string[]): Settings {
   if (argv.length > 2 && fileExists(resolve('./', argv[2]))) {
     // read configuration from file, if an existing file is specified in the arguments
     const fileConfig = JSON.parse(readFileSync(resolve('./', argv[2])).toString());
@@ -54,6 +63,7 @@ export function getSettings(argv: [string]): Settings {
     return configToSettings(cliConfig);
   }
 }
+export default getSettings;
 
 const defaultSettings: Settings = {
   tasks: {
@@ -83,8 +93,13 @@ const defaultSettings: Settings = {
 /**
  * Parses all elements from a config, into the correct format for settings, by parsing complex fields into datastructures
  * and applying defaults
+ *
+ * @access private
+ *
  * @param config {Object} configuration, which should be converted into Settings structure
  * @param configs {[Object]} [Optional] Multiple configurations, which will be merged into the first one
+ *
+ * @return {Settings} The settings generated from the configuration
  */
 function configToSettings(config: Object, ...configs: Object[]): Settings {
   return mergeObjects(defaultSettings, parseFields(mergeObjects(config, ...configs)));

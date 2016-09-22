@@ -1,7 +1,7 @@
 // @flow
 
 import { createReadStream } from "fs";
-import LineBuffer from "./input/LineBuffer";
+import { LineBuffer } from "./input/LineBuffer";
 import { createHash } from "crypto";
 import type { ElasticsearchSettings } from '../settings/settings';
 import { fileNameToDate } from './parsing/parsing';
@@ -18,7 +18,7 @@ import { Client } from 'elasticsearch';
  *
  * @return {Promise} Promise which is resolved with the source file Path and rejected with errors while inserting into db
  */
-export default function insert(file: string, settings: ElasticsearchSettings): Promise<string> {
+export function insert(file: string, settings: ElasticsearchSettings): Promise<string> {
   const date = fileNameToDate(file);
   if (!date) return Promise.reject(new Error("No date in filename"));
 
@@ -30,7 +30,7 @@ export default function insert(file: string, settings: ElasticsearchSettings): P
     buffer.on("data", lines => {
       fileReader.pause();
       const data = lines.map(line => parseLine(line));
-      addChunkToIndex(data, date, settings).then(result => {
+      addDatasetsToIndex(data, date, settings).then(result => {
         if (!result) throw new Error("Data wasn't inserted");
 
         // log insertion information
@@ -46,8 +46,20 @@ export default function insert(file: string, settings: ElasticsearchSettings): P
     })
   })
 }
+export default insert;
 
-function addChunkToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings): Promise<string> {
+/**
+ * Adds an array of datasets into the specified index.
+ *
+ * @access private
+ *
+ * @param data {Dataset[]} The datasets, which should be inserted.
+ * @param date {Date} The corresponding date for the datasets.
+ * @param settings {ElasticsearchSettings} The settings for the insertion process.
+ *
+ * @return {Promise<Object[]>} Promise resolved with the result objects or rejected with errors while inserting.
+ */
+function addDatasetsToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings): Promise<Object[]> {
   const client = getClient(settings.address, settings.port);
   const operations = [].concat.apply([], data.map(datarow => {
     const id = getHash(datarow.article);
@@ -83,10 +95,29 @@ function addChunkToIndex(data: Dataset[], date: Date, settings: ElasticsearchSet
 type ElasticsearchClient = {
   bulk: Function
 }
+/**
+ * Provides an Elasticsearch Client for an Elasticsearch at the specified location.
+ *
+ * @access private
+ *
+ * @param address {string} Address of the Elasticsearch instance.
+ * @param port {number} Port of the Elasticsearch instance.
+ *
+ * @return {ElasticsearchClient} The client for interaction with the specified Elasticsearch instance.
+ */
 export function getClient(address: string, port: number): ElasticsearchClient {
  return new Client({host: `${address}:${String(port)}`});
 }
 
+/**
+ * Generates the sha1 hash of a string.
+ *
+ * @access private
+ *
+ * @param inputString {string} String, which should be hashed.
+ *
+ * @return {string} sha1 hash of input string.
+ */
 function getHash(inputString: string): string {
   return createHash('sha1')
     .update(inputString)

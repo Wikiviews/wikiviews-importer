@@ -91,3 +91,4 @@ export function argumentsToConfig(args: Object): Object {
 
   return result;
 }
+export default argumentsToConfig;

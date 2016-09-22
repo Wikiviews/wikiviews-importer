@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // @flow
 import download from "./download/download";
 import insert from "./elasticsearch/insert";

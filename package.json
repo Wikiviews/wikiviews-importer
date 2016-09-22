@@ -4,7 +4,7 @@
   "description": "Importer for the Wikipedia Pageviews (https://dumps.wikimedia.org/other/pageviews/) dataset.",
   "main": "lib/index.js",
   "bin": {
-    "wv-import": "lib/index.js"
+    "wv-import": "lib/import.js"
   },
   "scripts": {
     "clean": "rm -rf lib",

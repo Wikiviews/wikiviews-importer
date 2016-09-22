@@ -136,10 +136,10 @@ export function downloadFile(url: string, target: string, decompressorFactory: ?
 function getDecompressorFactory(compression: string): ?Function<Transform> {
   switch (compression) {
     case 'gz':
-      return createGunzip();
+      return createGunzip;
       break;
     case 'zip':
-      return createUnzip();
+      return createUnzip;
       break;
     default:
       return null;

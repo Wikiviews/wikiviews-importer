@@ -18,7 +18,8 @@
     "prebuild": "npm run clean",
     "build": "babel src -d lib",
     "prebuild:dev": "npm run prebuild",
-    "build:dev": "babel src -d lib --source-maps \"both\""
+    "build:dev": "babel src -d lib --source-maps \"both\"",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "Elasticsearch",

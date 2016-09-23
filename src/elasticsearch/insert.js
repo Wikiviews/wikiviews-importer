@@ -24,24 +24,29 @@ export function insert(file: string, settings: ElasticsearchSettings): Promise<s
 
   return new Promise((resolve, reject) => {
     const fileReader = createReadStream(file);
+    const client = getClient(settings.address, settings.port);
     const buffer = new LineBuffer(settings.batch);
     fileReader.pipe(buffer);
 
     buffer.on("data", lines => {
       fileReader.pause();
       const data = lines.map(line => parseLine(line));
-      addDatasetsToIndex(data, date, settings).then(result => {
+      addDatasetsToIndex(data, date, settings, client).then(result => {
         if (!result) throw new Error("Data wasn't inserted");
 
         // log insertion information
-        console.log(`Inserted ${result.length} rows into Elasticsearch`);
+        console.log(`Inserted ${result.items.length} rows into Elasticsearch`);
 
         fileReader.resume();
         return true;
-      }).catch(reason => reject(reason));
+      }).catch(reason => {
+        client.close();
+        reject(reason)
+      });
     });
 
     buffer.on("end", () => {
+      client.close();
       resolve(file);
     })
   })
@@ -59,8 +64,7 @@ export default insert;
  *
  * @return {Promise<Object[]>} Promise resolved with the result objects or rejected with errors while inserting.
  */
-function addDatasetsToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings): Promise<Object[]> {
-  const client = getClient(settings.address, settings.port);
+function addDatasetsToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings, client: ElasticsearchClient): Promise<Object[]> {
   const operations = [].concat.apply([], data.map(datarow => {
     const id = getHash(datarow.article);
 
@@ -93,7 +97,8 @@ function addDatasetsToIndex(data: Dataset[], date: Date, settings: Elasticsearch
 }
 
 type ElasticsearchClient = {
-  bulk: Function
+  bulk: Function,
+  close: Function
 }
 /**
  * Provides an Elasticsearch Client for an Elasticsearch at the specified location.

@@ -1,36 +1,36 @@
 # Wikiviews Importer
 A tool for importing excerpts from the [Wikipedia Pageviews dataset](https://dumps.wikimedia.org/other/pageviews/) into [Elasticsearch](https://github.com/Wikiviews/wikiviews-elasticsearch) for the use as data-backend for the Wikiviews application.
- 
- It automates the process of selecting, downloading and parsing the data and inserting them into Elasticsearch.
- 
- ## Installation
- ### via NPM
- The project provides an NPM package, which can be installed via
- ```shell
- npm install -g @wikiviews/wikiviews-importer
- ```
- This package is automatically generated for each repository tag via [Travis-CI](https://travis-ci.org/Wikiviews/wikiviews-importer)([![Build Status](https://travis-ci.org/Wikiviews/wikiviews-importer.svg?branch=master)](https://travis-ci.org/Wikiviews/wikiviews-importer)).
- 
- ### Manually
- After cloning the repository, you can install the package manually via
- ```shell
- npm install && npm run build && npm install -g
- ```
- 
- ## Usage
- The tool provides the commandline utility
- ```shell
- wv-import
- ```
- to perform the import.
- 
- It optionally accepts a path to a configuration file as first parameter and optional configuration via commandline parameters.
- 
- ### Configuration
- The importer can be configured via a configuration file in JSON format and via commandline parameters (in the format `--{PARAMETERNAME}={VALUE}`).
- 
- The following configuration options are available:
- 
+
+It automates the process of selecting, downloading and parsing the data and inserting them into Elasticsearch.
+
+## Installation
+### via NPM
+The project provides an NPM package, which can be installed via
+```shell
+npm install -g @wikiviews/wikiviews-importer
+```
+This package is automatically generated for each repository tag via [Travis-CI](https://travis-ci.org/Wikiviews/wikiviews-importer)([![Build Status](https://travis-ci.org/Wikiviews/wikiviews-importer.svg?branch=master)](https://travis-ci.org/Wikiviews/wikiviews-importer)).
+
+### Manually
+After cloning the repository, you can install the package manually via
+```shell
+npm install && npm run build && npm install -g
+```
+
+## Usage
+The tool provides the commandline utility
+```shell
+wv-import
+```
+to perform the import.
+
+It optionally accepts a path to a configuration file as first parameter and optional configuration via commandline parameters.
+
+### Configuration
+The importer can be configured via a configuration file in JSON format and via commandline parameters (in the format `--{PARAMETERNAME}={VALUE}`).
+
+The following configuration options are available:
+
  Option | Corresponding CLI parameter | Description | Default
  -------|-----------------------------|-------------|--------
  `tasks.download` | `download` | If set to `true`, the selected data dumps are downloaded.<br> If set to `false`, the selection is applied to all already existing elements in the destination directory, which are then used as source. | `true`

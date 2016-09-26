@@ -22,9 +22,7 @@ dataPaths.forEach(pathPrms => {
 });
 
 if (settings.tasks.elasticsearch) {
-  dataPaths.map(pathPrms => {
-    return pathPrms.then(path => insert(path, settings.elasticsearch));
-  }).map(pathPrms => {
+  insert(dataPaths, settings.elasticsearch).map(pathPrms => {
     pathPrms.then(path => {
       console.log(`${path} inserted into Elasticsearch`);
     }).catch(reason => {

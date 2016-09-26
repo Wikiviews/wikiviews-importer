@@ -85,6 +85,10 @@ export function argumentsToConfig(args: Object): Object {
     result.elasticsearch.type = args.esType;
   }
 
+  if (args.concurrentInsertions) {
+    result.elasticsearch.concurrent = args.concurrentInsertions;
+  }
+
   if (args.batchInsert) {
     result.elasticsearch.batch = args.batchInsert;
   }

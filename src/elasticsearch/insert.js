@@ -8,6 +8,62 @@ import { fileNameToDate } from './parsing/parsing';
 import { parseLine } from './parsing/parsing';
 import type { Dataset } from './parsing/parsing';
 import { Client } from 'elasticsearch';
+import { LaunchEmitter } from '../util/LaunchEmitter';
+
+/**
+ * inserts a row of files into elasticsearch
+ * @access public
+ *
+ * @param files {Promise<string>[]} The file paths, which will exist in the future
+ * @param settings {ElasticsearchSettings} settings for the insertion process
+ *
+ * @return {Promise<string>[]} Array of promises, which either contain the inserted file paths or errors while inserting
+ */
+export function insert(files: Promise<string>[], settings: ElasticsearchSettings): Promise<string>[] {
+  return insertChunks(files, (isFinite(settings.concurrent) ? settings.concurrent : files.length), settings);
+}
+export default insert;
+
+/**
+ * inserts a row of files in chunks into Elasticsearch
+ *
+ * @access private
+ *
+ * @param files {Promise<string>[]} The file paths, which will exist in the future
+ * @param chunkSize {number} number of concurrently inserted files
+ * @param settings {ElasticsearchSettings} settings for the insertion process
+ * @param launcher {EventEmitter} [Optional] EventEmitter, which emits the launch event, if the first chunk should be started (if not provided, chunks get downloaded immediately)
+ *
+ * @return {Promise<string>[]} Array of promises, which either contain the inserted file paths or errors while inserting
+ */
+function insertChunks(files: Promise<string>[], chunkSize: number, settings: ElasticsearchSettings, launcher: ?LaunchEmitter): Promise<string>[] {
+  if (files.length < 1) {
+    return [];
+  } else if (files.length <= chunkSize) {
+    return files.map((file: Promise<string>) => {
+      return file.then(path => insertFile(path, settings, launcher));
+    });
+  } else {
+    // if more elements should be inserted than the current chunk size, create a new launcher, and download remaining elements, when the
+    // current chunk is finished
+    const currentChunk = files.slice(0, chunkSize);
+    const nextChunks = files.slice(chunkSize);
+    const nextLauncher = new LaunchEmitter();
+
+    const currentPromises = currentChunk.map((file: Promise<string>) => {
+      return file.then(path => insertFile(path, settings, launcher));
+    });
+
+    // launch next downloads if current insertions are finished
+    Promise.all(currentPromises).then(_ => {
+      nextLauncher.launch();
+    }).catch(_ => {
+      nextLauncher.launch();
+    });
+
+    return currentPromises.concat(insertChunks(nextChunks, chunkSize, settings, nextLauncher));
+  }
+}
 
 /**
  * adds the Wikipedia pageview data in the specified file into the specified Elasticsearch instance
@@ -15,14 +71,23 @@ import { Client } from 'elasticsearch';
  *
  * @param file {String} file path of the source file
  * @param settings {ElasticsearchSettings} parameters for the insertion process
+ * @param launcher {LaunchEmitter} [Optional] If specified, the insertion is triggered by the launch emitter
  *
  * @return {Promise} Promise which is resolved with the source file Path and rejected with errors while inserting into db
  */
-export function insert(file: string, settings: ElasticsearchSettings): Promise<string> {
-  const date = fileNameToDate(file);
-  if (!date) return Promise.reject(new Error("No date in filename"));
-
+export function insertFile(file: string, settings: ElasticsearchSettings, launcher: ?LaunchEmitter): Promise<string> {
   return new Promise((resolve, reject) => {
+    if (launcher) {
+      launcher.on('launch', () => performInsertion(resolve, reject));
+    } else {
+      performInsertion(resolve, reject);
+    }
+  });
+
+  function performInsertion(resolve, reject) {
+    const date = fileNameToDate(file);
+    if (!date) return Promise.reject(new Error("No date in filename"));
+
     const fileReader = createReadStream(file);
     const client = getClient(settings.address, settings.port);
     const buffer = new LineBuffer(settings.batch);
@@ -49,9 +114,8 @@ export function insert(file: string, settings: ElasticsearchSettings): Promise<s
       client.close();
       resolve(file);
     })
-  })
+  }
 }
-export default insert;
 
 /**
  * Adds an array of datasets into the specified index.
@@ -61,10 +125,11 @@ export default insert;
  * @param data {Dataset[]} The datasets, which should be inserted.
  * @param date {Date} The corresponding date for the datasets.
  * @param settings {ElasticsearchSettings} The settings for the insertion process.
+ * @param client {ElasticsearchClient} ES client for the insertion process
  *
  * @return {Promise<Object[]>} Promise resolved with the result objects or rejected with errors while inserting.
  */
-function addDatasetsToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings, client: ElasticsearchClient): Promise<Object[]> {
+function addDatasetsToIndex(data: Dataset[], date: Date, settings: ElasticsearchSettings, client: ElasticsearchClient): Promise<Object> {
   const operations = [].concat.apply([], data.map(datarow => {
     const id = getHash(datarow.article);
 

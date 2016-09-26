@@ -48,6 +48,7 @@ The following configuration options are available:
 `elasticsearch.address` | `esAddress` | The address / domain on which the target Elasticsearch instance is listening. | `'localhost'`
 `elasticsearch.index` | `esIndex` | The target index in the Elasticsearch cluster.<br> The default matches if the Cluster is set up via `wikiviews-elasticsearch`. | `'wikiviews'`
 `elasticsearch.type` | `esType` | The target type in the Elasticsearch cluster.<br> The default matches if the Cluster is set up via `wikiviews-elasticsearch`. | `'article'`
+`elasticsearch.concurrent` | `concurrentInsertions` | The number of files, which get inserted concurrently into elasticsearch. Either `'all'` or the number of files. | `'all'` 
 `elasticsearch.batch` | `batchInsert` | The number of batch-inserted dataset rows.<br> Adapt the value to optimize your memory consumption. | `10000`
 
 For example the configuration file, which would set the default values would look like this:
@@ -73,6 +74,7 @@ For example the configuration file, which would set the default values would loo
     "address": "localhost",
     "index": "wikiviews",
     "type": "article",
+    "concurrent": "all",
     "batch": 10000
   }
 }

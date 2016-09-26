@@ -36,6 +36,7 @@ export type ElasticsearchSettings = {
   address: string,
   index: string,
   type: string,
+  concurrent: number,
   batch: number
 }
 
@@ -86,6 +87,7 @@ const defaultSettings: Settings = {
     address: 'localhost',
     index: 'wikiviews',
     type: 'article',
+    concurrent: Infinity,
     batch: 10000
   }
 };
@@ -112,6 +114,15 @@ function configToSettings(config: Object, ...configs: Object[]): Settings {
       if (result.download[key]) {
         result.download[key] = parseExpansionRule(result.download[key]);
       }
+    }
+
+    // parse elasticsearch.concurrent
+    if (typeof result.elasticsearch.concurrent === 'string' && result.elasticsearch.concurrent === 'all') {
+      result.elasticsearch.concurrent = Infinity;
+    } else {
+      const res = Number(result.elasticsearch.concurrent);
+      if (isNaN(res)) throw new Error(`Incorrect value specified for elasticsearch.concurrent. Expected: number or 'all'. Actual: ${result.elasticsearch.concurrent}`);
+      result.elasticsearch.concurrent = res;
     }
 
     return result;

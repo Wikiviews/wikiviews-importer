@@ -9,24 +9,10 @@ import { get as httpRequest } from "http";
 import { get as httpsRequest } from "https";
 import { parse as parseUrl } from "url";
 import { Transform } from "stream";
-import { EventEmitter } from "events";
 import { expand } from 'pattern-expander';
 import type { DownloadSettings } from '../settings/settings';
 import { createGunzip, createUnzip } from 'zlib';
-
-/**
- * Event emitter for emitting launch events
- * @access private
- */
-class LaunchEmitter extends EventEmitter {
-  constructor() {
-    super();
-  }
-
-  launch() {
-    this.emit('launch');
-  }
-}
+import {LaunchEmitter} from '../util/LaunchEmitter';
 
 /**
  * downloads a row of files, identified by patterns
@@ -62,7 +48,7 @@ export default download;
  *
  * @return {[Promise]} Array of Promises, which either contain the file path of the resulting files or the resulting data
  */
-function downloadChunks(paths: {source: string, dest: string}[], chunkSize: number, decompressorFactory: ?Function<Transform>, launcher: ?EventEmitter): Promise<string>[] {
+function downloadChunks(paths: {source: string, dest: string}[], chunkSize: number, decompressorFactory: ?Function<Transform>, launcher: ?LaunchEmitter): Promise<string>[] {
   if (paths.length < 1) {
     return [];
   } else if (paths.length <= chunkSize) {
